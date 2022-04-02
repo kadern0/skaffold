@@ -76,24 +76,18 @@ func createNewRunner(ctx context.Context, out io.Writer, opts config.SkaffoldOpt
 		event.InititializationFailed(err)
 		return nil, nil, nil, fmt.Errorf("creating runner: %w", err)
 	}
-	output.Default.Fprintf(out, "***************** configs are %w ", configs)
 	return runner, configs, runCtx, nil
 }
 
 func runContext(ctx context.Context, out io.Writer, opts config.SkaffoldOptions) (*runcontext.RunContext, []util.VersionedConfig, error) {
 	cfgSet, err := withFallbackConfig(ctx, out, opts, parser.GetConfigSet)
-	output.Default.Fprintln(out, "***************** 4")
 	if err != nil {
-		output.Default.Fprintln(out, "***************** 4b")
 		return nil, nil, err
 	}
-	output.Default.Fprintln(out, "***************** 4c")
 	setDefaultDeployer(cfgSet)
-	output.Default.Fprintln(out, "***************** 4d")
 	if err := validation.Process(cfgSet, validation.GetValidationOpts(opts)); err != nil {
 		return nil, nil, fmt.Errorf("invalid skaffold config: %w", err)
 	}
-	output.Default.Fprintln(out, "***************** 5")
 	var configs []util.VersionedConfig
 	for _, cfg := range cfgSet {
 		configs = append(configs, cfg.SkaffoldConfig)
@@ -107,7 +101,6 @@ func runContext(ctx context.Context, out io.Writer, opts config.SkaffoldOptions)
 	if err := validation.ProcessWithRunContext(ctx, runCtx); err != nil {
 		return nil, nil, fmt.Errorf("invalid skaffold config: %w", err)
 	}
-	output.Default.Fprintln(out, "***************** 6")
 	return runCtx, configs, nil
 }
 
@@ -118,12 +111,10 @@ func withFallbackConfig(ctx context.Context, out io.Writer, opts config.Skaffold
 		return configs, nil
 	}
 	var e sErrors.Error
-	output.Default.Fprintln(out, "***************** 111")
 	if errors.As(err, &e) && e.StatusCode() == proto.StatusCode_CONFIG_FILE_NOT_FOUND_ERR {
 		if opts.AutoCreateConfig && initializer.ValidCmd(opts) {
 			output.Default.Fprintf(out, "Skaffold config file %s not found - Trying to create one for you...\n", opts.ConfigurationFile)
 			config, err := initializer.Transparent(context.Background(), out, initConfig.Config{Opts: opts})
-			output.Default.Fprintln(out, "***************** 2")
 			if err != nil {
 				return nil, fmt.Errorf("unable to generate skaffold config file automatically - try running `skaffold init`: %w", err)
 			}
@@ -144,7 +135,6 @@ func withFallbackConfig(ctx context.Context, out io.Writer, opts config.Skaffold
 	// If the error is NOT that the file doesn't exist, then we warn the user
 	// that maybe they are using an outdated version of Skaffold that's unable to read
 	// the configuration.
-	output.Default.Fprintln(out, "***************** 3")
 	warnIfUpdateIsAvailable()
 	return nil, fmt.Errorf("parsing skaffold config: %w", err)
 }

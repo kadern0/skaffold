@@ -53,21 +53,6 @@ build:
 deploy:
   kubectl: {}
 `
-	simpleConfigDependencies = `
-build:
-  tagPolicy:
-    gitCommit: {}
-  artifacts:
-  - image: example
-    custom:
-      buildCommand: "echo"
-      dependencies:
-        paths:
-          - /tmp/dependencies
-deploy:
-  kubectl: {}
-`
-
 	// This config has two tag policies set.
 	invalidConfig = `
 build:

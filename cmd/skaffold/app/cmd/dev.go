@@ -70,9 +70,6 @@ func runDev(ctx context.Context, out io.Writer) error {
 				for _, cfg := range configs {
 					artifacts = append(artifacts, cfg.(*latestV1.SkaffoldConfig).Build.Artifacts...)
 				}
-				for i := range artifacts {
-					output.Default.Fprintf(out, "Artifacts are: %s *******************", i)
-				}
 				err := r.Dev(ctx, out, artifacts)
 
 				if r.HasDeployed() {

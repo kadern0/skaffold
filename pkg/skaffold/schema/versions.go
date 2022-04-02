@@ -203,7 +203,6 @@ func ParseConfig(filename string) ([]util.VersionedConfig, error) {
 	factories, err := configFactoryFromAPIVersion(buf)
 
 	if err != nil {
-		fmt.Println("fails here")
 		return nil, err
 	}
 	buf, err = removeYamlAnchors(buf)
@@ -217,12 +216,10 @@ func ParseConfig(filename string) ([]util.VersionedConfig, error) {
 func ParseConfigAndUpgrade(filename string) ([]util.VersionedConfig, error) {
 	configs, err := ParseConfig(filename)
 	if err != nil {
-		fmt.Println("hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
 		return nil, err
 	}
 	toVersion, err := getLatestFromCompatibilityCheck(configs)
 	if err != nil {
-		fmt.Println("asdfasdfasdfasdfasdfasdfasdfasdfasdf")
 		return nil, err
 	}
 	return UpgradeTo(configs, toVersion)
@@ -303,10 +300,8 @@ func parseConfig(buf []byte, factories []func() util.VersionedConfig) ([]util.Ve
 			break
 		}
 		if err != nil {
-			fmt.Println("this is what fails")
 			return nil, fmt.Errorf("unable to parse config: %w", err)
 		}
-		fmt.Println("***************************************************************************************************")
 		fmt.Println(cfg.GetVersion())
 
 		cfgs = append(cfgs, cfg)

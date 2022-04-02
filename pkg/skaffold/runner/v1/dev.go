@@ -150,24 +150,6 @@ func (r *SkaffoldRunner) doDev(ctx context.Context, out io.Writer) error {
 			}
 		}
 
-		events := r.changeSet.GetEvents()
-
-		added := events.Added
-		modified := events.Modified
-		deleted := events.Deleted
-
-		for i := range added {
-			output.Default.Fprintf(out, "Files added are ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", i)
-
-		}
-		for i := range modified {
-			output.Default.Fprintf(out, "Files modi are  ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", i)
-
-		}
-		for i := range deleted {
-			output.Default.Fprintf(out, "Files del are ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", i)
-
-		}
 		if err := r.Test(childCtx, out, bRes, r.changeSet.GetEvents()); err != nil {
 			if needsDeploy {
 				log.Entry(ctx).Warn("Skipping deploy due to test error:", err)
@@ -279,9 +261,6 @@ func (r *SkaffoldRunner) Dev(ctx context.Context, out io.Writer, artifacts []*la
 	// Watch test configuration
 	for i := range artifacts {
 		artifact := artifacts[i]
-		zzz, _ := r.tester.TestDependencies(ctx, artifact)
-		output.Default.Fprintln(out, " Tests dependencies are *************************************: %s \n", zzz)
-
 		if err := r.monitor.Register(
 			func() ([]string, error) { return r.tester.TestDependencies(ctx, artifact) },
 			func(e filemon.Events) { r.changeSet.AddRetest(artifact, e) },

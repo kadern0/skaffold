@@ -84,7 +84,6 @@ func GetConfigSet(ctx context.Context, opts config.SkaffoldOptions) (SkaffoldCon
 	r := newRecord()
 	cfgs, fieldsOverrodeByProfile, err := getConfigs(ctx, cOpts, opts, r)
 	if err != nil {
-		fmt.Println("aaaaaaaaaaaaaaaaaaaaaaa")
 		return nil, err
 	}
 	if len(cfgs) == 0 {
@@ -101,7 +100,6 @@ func GetConfigSet(ctx context.Context, opts config.SkaffoldOptions) (SkaffoldCon
 	for _, c := range cfgs {
 		yinfos, err := configlocations.Parse(c.SourceFile, c.SkaffoldConfig, fieldsOverrodeByProfile)
 		if err != nil {
-			fmt.Println("bbbbbbbbbbbb")
 			return nil, err
 		}
 		c.YAMLInfos = yinfos
@@ -113,15 +111,11 @@ func GetConfigSet(ctx context.Context, opts config.SkaffoldOptions) (SkaffoldCon
 // getConfigs recursively parses all configs and their dependencies in the specified `skaffold.yaml`
 func getConfigs(ctx context.Context, cfgOpts configOpts, opts config.SkaffoldOptions, r *record) (SkaffoldConfigSet, map[string]configlocations.YAMLOverrideInfo, error) {
 	fieldsOverrodeByProfile := map[string]configlocations.YAMLOverrideInfo{}
-	fmt.Println("ccccccccccccccccccccccc")
 	parsed, err := schema.ParseConfigAndUpgrade(cfgOpts.file)
 	if err != nil {
-		fmt.Println("ddddddddddddddddddddddd")
 		if errors.Is(err, os.ErrNotExist) {
-			fmt.Println("eeeeeeeeeeeeeeeeeeeeeeee")
 			return nil, nil, sErrors.MainConfigFileNotFoundErr(cfgOpts.file, err)
 		}
-		fmt.Println("ffffffffffffffffffffff")
 		return nil, nil, sErrors.ConfigParsingError(err)
 	}
 
@@ -132,7 +126,6 @@ func getConfigs(ctx context.Context, cfgOpts configOpts, opts config.SkaffoldOpt
 	}
 
 	if len(parsed) == 0 {
-		fmt.Println("ggggggggggggggggggggggg")
 		return nil, nil, sErrors.ZeroConfigsParsedErr(cfgOpts.file)
 	}
 	log.Entry(context.TODO()).Debugf("parsed %d configs from configuration file %s", len(parsed), cfgOpts.file)
@@ -152,7 +145,6 @@ func getConfigs(ctx context.Context, cfgOpts configOpts, opts config.SkaffoldOpt
 			continue
 		}
 		if seen[cfgName] {
-			fmt.Println("jjjjjjjjjjjjjjjjjjjjjj")
 			return nil, nil, sErrors.DuplicateConfigNamesInSameFileErr(cfgName, cfgOpts.file)
 		}
 		seen[cfgName] = true

@@ -337,7 +337,7 @@ func updateCheckForReleasedVersionsIfNotDisabled(s string) string {
 	}
 	msg, err := updateCheck(opts.GlobalConfig)
 	if err != nil {
-		log.Entry(context.TODO()).Infof("update check failed111: %s", err)
+		log.Entry(context.TODO()).Infof("update check failed: %s", err)
 	}
 	return msg
 }

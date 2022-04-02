@@ -76,33 +76,25 @@ func (ct *Runner) runCustomTest(ctx context.Context, out io.Writer, imageTag str
 	runCt := true
 	test := ct.customTest
 	deps, _ := ct.TestDependencies(ctx)
-	added := events.Added
+	//	added := events.Added
 	modified := events.Modified
-	deleted := events.Deleted
+	//	deleted := events.Deleted
 
 	if len(modified) > 0 {
 		runCt = false
 	}
-	// output.Default.Fprintf(out, "Files added ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", added)
-
-	// output.Default.Fprintf(out, "Files modi ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", modified)
-
-	// output.Default.Fprintf(out, "Files del ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", deleted)
 
 	// Expand command
 	command, err := util.ExpandEnvTemplate(test.Command, nil)
-	output.Default.Fprintf(out, "Command is ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", command)
-	output.Default.Fprintf(out, "Dependencies are ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", deps)
+	if err != nil {
+		return cmdRunParsingErr(test.Command, err)
+	}
 	for _, d := range deps {
 		for _, m := range modified {
 			if m == d {
-				output.Default.Fprintf(out, "This dependency has been modified ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", d)
 				runCt = true
 			}
 		}
-	}
-	if err != nil {
-		return cmdRunParsingErr(test.Command, err)
 	}
 	if !runCt {
 		output.Default.Fprintf(out, "Skipping custom test command: %q\n", command)
