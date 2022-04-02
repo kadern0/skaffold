@@ -31,6 +31,7 @@ import (
 
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/docker"
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/lint"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/output/log"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/parser"
@@ -60,7 +61,7 @@ func NewHandler(conn jsonrpc2.Conn) *Handler {
 	}
 }
 
-func sendValidationAndLintDiagnostics(ctx context.Context, opts config.SkaffoldOptions, out io.Writer, req jsonrpc2.Request, createRunner func(ctx context.Context, out io.Writer, opts config.SkaffoldOptions) (runner.Runner, []schemautil.VersionedConfig, *runcontext.RunContext, error)) error {
+func sendValidationAndLintDiagnostics(ctx context.Context, opts config.SkaffoldOptions, out io.Writer, req jsonrpc2.Request, createRunner func(ctx context.Context, out io.Writer, opts config.SkaffoldOptions, events filemon.Events) (runner.Runner, []schemautil.VersionedConfig, *runcontext.RunContext, error)) error {
 	isValidConfig := true
 	diags, err := validateFiles(ctx, opts, req)
 	if err != nil {
@@ -74,7 +75,7 @@ func sendValidationAndLintDiagnostics(ctx context.Context, opts config.SkaffoldO
 	}
 
 	if isValidConfig {
-		_, _, runCtx, err := createRunner(ctx, out, opts)
+		_, _, runCtx, err := createRunner(ctx, out, opts, filemon.Events{})
 		if err != nil {
 			return err
 		}
@@ -90,7 +91,7 @@ func sendValidationAndLintDiagnostics(ctx context.Context, opts config.SkaffoldO
 	return nil
 }
 
-func GetHandler(conn jsonrpc2.Conn, out io.Writer, opts config.SkaffoldOptions, createRunner func(ctx context.Context, out io.Writer, opts config.SkaffoldOptions) (runner.Runner, []schemautil.VersionedConfig, *runcontext.RunContext, error)) jsonrpc2.Handler {
+func GetHandler(conn jsonrpc2.Conn, out io.Writer, opts config.SkaffoldOptions, createRunner func(ctx context.Context, out io.Writer, opts config.SkaffoldOptions, events filemon.Events) (runner.Runner, []schemautil.VersionedConfig, *runcontext.RunContext, error)) jsonrpc2.Handler {
 	h = *NewHandler(conn)
 	util.Fs = afero.NewCacheOnReadFs(util.Fs, h.documentManager.memMapFs, 0)
 

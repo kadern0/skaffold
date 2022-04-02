@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/GoogleContainerTools/skaffold/cmd/skaffold/app/tips"
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/graph"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/runner"
 	latestV1 "github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/latest/v1"
@@ -61,5 +62,5 @@ func doDeploy(ctx context.Context, out io.Writer) error {
 		}
 
 		return r.DeployAndLog(ctx, out, buildArtifacts)
-	})
+	}, filemon.Events{})
 }

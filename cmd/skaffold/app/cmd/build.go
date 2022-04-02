@@ -27,6 +27,7 @@ import (
 
 	"github.com/GoogleContainerTools/skaffold/cmd/skaffold/app/flags"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/runner"
 	latestV1 "github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/latest/v1"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/util"
@@ -92,7 +93,7 @@ func doBuild(ctx context.Context, out io.Writer) error {
 		}
 
 		return err
-	})
+	}, filemon.Events{})
 }
 
 func targetArtifacts(opts config.SkaffoldOptions, configs []util.VersionedConfig) []*latestV1.Artifact {

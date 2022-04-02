@@ -135,6 +135,9 @@ requires:
     configs: [cfg10]
   - path: doc2
     configs: [cfg21]
+#  - path: doc3
+#    configs: [cfg22]
+
 `}, {name: "cfg01", requiresStanza: ""}}},
 				{path: "doc1/skaffold.yaml", configs: []mockCfg{{name: "cfg10", requiresStanza: ""}, {name: "cfg11", requiresStanza: ""}}},
 				{path: "doc2/skaffold.yaml", configs: []mockCfg{{name: "cfg20", requiresStanza: ""}, {name: "cfg21", requiresStanza: ""}}},
@@ -1386,6 +1389,60 @@ profiles:
         manifests:
           - manifests-1-profile
 `
+
+var template2 = `apiVersion: skaffold/v2beta26
+kind: Config
+build:
+  artifacts:
+  - image: custom-test-example
+test:
+  - image: custom-test-example
+    custom:
+      - command: echo hola
+        dependencies:
+          paths:
+          - "test.sh"
+      - command: echo Hello world!
+        #dependencies:
+        #  command: echo [\"main_test.go\"]
+
+`
+
+func TestConfigDependenciesParse(t *testing.T) {
+	tests := []struct {
+		description      string
+		skaffoldYamlText string
+		profiles         []string
+		expected         *latestV1.CustomTestDependencies
+	}{{
+		description:      "initial dependency testXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+		skaffoldYamlText: template2,
+		profiles:         []string{},
+		expected: &latestV1.CustomTestDependencies{
+			Command: "echo hola",
+			Paths:   []string{"test.sh"},
+		},
+	},
+	}
+
+	for _, test := range tests {
+		testutil.Run(t, test.description, func(t *testutil.T) {
+			fp := t.TempFile("skaffoldyaml-", []byte(test.skaffoldYamlText))
+			cfgs, err := GetConfigSet(context.TODO(), config.SkaffoldOptions{ConfigurationFile: fp, Profiles: test.profiles})
+			if err != nil {
+				t.Fatalf(err.Error())
+			}
+			dependencies := cfgs[0].SkaffoldConfig.Pipeline.Test[0].CustomTests[1].Dependencies
+			// TestCase.CustomTests.Dependencies
+			if !reflect.DeepEqual(test.expected.Paths, dependencies.Paths) {
+				t.Errorf("expected %s dependencies in test, found %s dependencies", test.expected.Paths, dependencies.Paths)
+			}
+
+		},
+		)
+	}
+
+}
 
 func TestConfigLocationsParse(t *testing.T) {
 	tests := []struct {

@@ -23,6 +23,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/output"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/output/log"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/runner"
 	latestV1 "github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/latest/v1"
@@ -68,6 +70,9 @@ func runDev(ctx context.Context, out io.Writer) error {
 				for _, cfg := range configs {
 					artifacts = append(artifacts, cfg.(*latestV1.SkaffoldConfig).Build.Artifacts...)
 				}
+				for i := range artifacts {
+					output.Default.Fprintf(out, "Artifacts are: %s *******************", i)
+				}
 				err := r.Dev(ctx, out, artifacts)
 
 				if r.HasDeployed() {
@@ -87,7 +92,7 @@ func runDev(ctx context.Context, out io.Writer) error {
 				}
 
 				return err
-			})
+			}, filemon.Events{})
 			if err != nil {
 				if !errors.Is(err, runner.ErrorConfigurationChanged) {
 					return err

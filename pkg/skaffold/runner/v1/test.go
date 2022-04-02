@@ -22,15 +22,16 @@ import (
 
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/constants"
 	eventV2 "github.com/GoogleContainerTools/skaffold/pkg/skaffold/event/v2"
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/graph"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/output"
 )
 
-func (r *SkaffoldRunner) Test(ctx context.Context, out io.Writer, artifacts []graph.Artifact) error {
+func (r *SkaffoldRunner) Test(ctx context.Context, out io.Writer, artifacts []graph.Artifact, events filemon.Events) error {
 	eventV2.TaskInProgress(constants.Test, "Test")
 	out, ctx = output.WithEventContext(ctx, out, constants.Test, constants.SubtaskIDNone)
 
-	if err := r.tester.Test(ctx, out, artifacts); err != nil {
+	if err := r.tester.Test(ctx, out, artifacts, events); err != nil {
 		eventV2.TaskFailed(constants.Test, err)
 		return err
 	}

@@ -22,6 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/lint"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/output/log"
 )
@@ -41,7 +42,7 @@ func NewCmdLint() *cobra.Command {
 
 func doLint(ctx context.Context, out io.Writer) error {
 	// createRunner initializes state for objects (Docker client, etc.) lint uses
-	_, _, runCtx, err := createRunner(ctx, out, opts)
+	_, _, runCtx, err := createRunner(ctx, out, opts, filemon.Events{})
 	log.Entry(ctx).Debugf("starting skaffold lint with runCtx: %v", runCtx)
 	if err != nil {
 		return err

@@ -22,6 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/runner"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/util"
 )
@@ -45,5 +46,5 @@ func NewCmdDelete() *cobra.Command {
 func doDelete(ctx context.Context, out io.Writer) error {
 	return withRunner(ctx, out, func(r runner.Runner, _ []util.VersionedConfig) error {
 		return r.Cleanup(ctx, out, dryRun)
-	})
+	}, filemon.Events{})
 }

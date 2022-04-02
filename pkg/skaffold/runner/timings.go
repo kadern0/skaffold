@@ -23,6 +23,7 @@ import (
 
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/build"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/deploy"
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/graph"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/output"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/output/log"
@@ -67,11 +68,11 @@ func (w withTimings) Build(ctx context.Context, out io.Writer, tags tag.ImageTag
 	return bRes, nil
 }
 
-func (w withTimings) Test(ctx context.Context, out io.Writer, builds []graph.Artifact) error {
+func (w withTimings) Test(ctx context.Context, out io.Writer, builds []graph.Artifact, events filemon.Events) error {
 	start := time.Now()
 	output.Default.Fprintln(out, "Starting test...")
 
-	err := w.Tester.Test(ctx, out, builds)
+	err := w.Tester.Test(ctx, out, builds, events)
 	if err != nil {
 		return err
 	}

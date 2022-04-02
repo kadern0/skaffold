@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/GoogleContainerTools/skaffold/cmd/skaffold/app/tips"
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/runner"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/util"
 )
@@ -48,7 +49,7 @@ func doRun(ctx context.Context, out io.Writer) error {
 		}
 
 		if !opts.SkipTests {
-			err = r.Test(ctx, out, bRes)
+			err = r.Test(ctx, out, bRes, filemon.Events{})
 			if err != nil {
 				return fmt.Errorf("failed to test: %w", err)
 			}
@@ -62,5 +63,5 @@ func doRun(ctx context.Context, out io.Writer) error {
 		tips.PrintForRun(out, opts)
 
 		return nil
-	})
+	}, filemon.Events{})
 }

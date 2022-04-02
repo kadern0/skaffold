@@ -29,6 +29,7 @@ import (
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/build/list"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/docker"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/event"
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/output"
 	latestV1 "github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/latest/v1"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/util"
@@ -46,22 +47,24 @@ type Runner struct {
 	customTest latestV1.CustomTest
 	imageName  string
 	workspace  string
+	events     filemon.Events
 }
 
 // New creates a new custom.Runner.
-func New(cfg docker.Config, imageName string, ws string, ct latestV1.CustomTest) (*Runner, error) {
+func New(cfg docker.Config, imageName string, ws string, ct latestV1.CustomTest, events filemon.Events) (*Runner, error) {
 	return &Runner{
 		cfg:        cfg,
 		imageName:  imageName,
 		customTest: ct,
 		workspace:  ws,
+		events:     events,
 	}, nil
 }
 
 // Test is the entrypoint for running custom tests
-func (ct *Runner) Test(ctx context.Context, out io.Writer, imageTag string) error {
+func (ct *Runner) Test(ctx context.Context, out io.Writer, imageTag string, events filemon.Events) error {
 	event.TestInProgress()
-	if err := ct.runCustomTest(ctx, out, imageTag); err != nil {
+	if err := ct.runCustomTest(ctx, out, imageTag, events); err != nil {
 		event.TestFailed(ct.imageName, err)
 		return err
 	}
@@ -69,15 +72,42 @@ func (ct *Runner) Test(ctx context.Context, out io.Writer, imageTag string) erro
 	return nil
 }
 
-func (ct *Runner) runCustomTest(ctx context.Context, out io.Writer, imageTag string) error {
+func (ct *Runner) runCustomTest(ctx context.Context, out io.Writer, imageTag string, events filemon.Events) error {
+	runCt := true
 	test := ct.customTest
+	deps, _ := ct.TestDependencies(ctx)
+	added := events.Added
+	modified := events.Modified
+	deleted := events.Deleted
+
+	if len(modified) > 0 {
+		runCt = false
+	}
+	// output.Default.Fprintf(out, "Files added ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", added)
+
+	// output.Default.Fprintf(out, "Files modi ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", modified)
+
+	// output.Default.Fprintf(out, "Files del ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", deleted)
 
 	// Expand command
 	command, err := util.ExpandEnvTemplate(test.Command, nil)
+	output.Default.Fprintf(out, "Command is ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", command)
+	output.Default.Fprintf(out, "Dependencies are ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", deps)
+	for _, d := range deps {
+		for _, m := range modified {
+			if m == d {
+				output.Default.Fprintf(out, "This dependency has been modified ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", d)
+				runCt = true
+			}
+		}
+	}
 	if err != nil {
 		return cmdRunParsingErr(test.Command, err)
 	}
-
+	if !runCt {
+		output.Default.Fprintf(out, "Skipping custom test command: %q\n", command)
+		return nil
+	}
 	if test.TimeoutSeconds <= 0 {
 		output.Default.Fprintf(out, "Running custom test command: %q\n", command)
 	} else {

@@ -149,7 +149,26 @@ func (r *SkaffoldRunner) doDev(ctx context.Context, out io.Writer) error {
 				bRes = append(bRes, a)
 			}
 		}
-		if err := r.Test(childCtx, out, bRes); err != nil {
+
+		events := r.changeSet.GetEvents()
+
+		added := events.Added
+		modified := events.Modified
+		deleted := events.Deleted
+
+		for i := range added {
+			output.Default.Fprintf(out, "Files added are ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", i)
+
+		}
+		for i := range modified {
+			output.Default.Fprintf(out, "Files modi are  ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", i)
+
+		}
+		for i := range deleted {
+			output.Default.Fprintf(out, "Files del are ->>>>>>>>>>>>>>>>>>>>>>>: %q\n", i)
+
+		}
+		if err := r.Test(childCtx, out, bRes, r.changeSet.GetEvents()); err != nil {
 			if needsDeploy {
 				log.Entry(ctx).Warn("Skipping deploy due to test error:", err)
 			}
@@ -206,6 +225,7 @@ func (r *SkaffoldRunner) doDev(ctx context.Context, out io.Writer) error {
 // Dev watches for changes and runs the skaffold build, test and deploy
 // config until interrupted by the user.
 func (r *SkaffoldRunner) Dev(ctx context.Context, out io.Writer, artifacts []*latestV1.Artifact) error {
+
 	event.DevLoopInProgress(r.devIteration)
 	eventV2.InitializeState(r.runCtx)
 	eventV2.TaskInProgress(constants.DevLoop, "")
@@ -259,9 +279,12 @@ func (r *SkaffoldRunner) Dev(ctx context.Context, out io.Writer, artifacts []*la
 	// Watch test configuration
 	for i := range artifacts {
 		artifact := artifacts[i]
+		zzz, _ := r.tester.TestDependencies(ctx, artifact)
+		output.Default.Fprintln(out, " Tests dependencies are *************************************: %s \n", zzz)
+
 		if err := r.monitor.Register(
 			func() ([]string, error) { return r.tester.TestDependencies(ctx, artifact) },
-			func(filemon.Events) { r.changeSet.AddRetest(artifact) },
+			func(e filemon.Events) { r.changeSet.AddRetest(artifact, e) },
 		); err != nil {
 			event.DevLoopFailedWithErrorCode(r.devIteration, proto.StatusCode_DEVINIT_REGISTER_TEST_DEPS, err)
 			eventV2.TaskFailed(constants.DevLoop, err)
@@ -312,7 +335,7 @@ func (r *SkaffoldRunner) Dev(ctx context.Context, out io.Writer, artifacts []*la
 	}
 	// First test
 	if r.runCtx.IsTestPhaseActive() {
-		if err = r.Test(ctx, out, bRes); err != nil {
+		if err = r.Test(ctx, out, bRes, r.changeSet.GetEvents()); err != nil {
 			event.DevLoopFailedInPhase(r.devIteration, constants.Build, err)
 			eventV2.TaskFailed(constants.DevLoop, err)
 			endTrace()

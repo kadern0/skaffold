@@ -41,7 +41,7 @@ import (
 )
 
 // NewForConfig returns a new SkaffoldRunner for a SkaffoldConfig
-func NewForConfig(ctx context.Context, runCtx *runcontext.RunContext) (*SkaffoldRunner, error) {
+func NewForConfig(ctx context.Context, runCtx *runcontext.RunContext, events filemon.Events) (*SkaffoldRunner, error) {
 	event.InitializeState(runCtx)
 	event.LogMetaEvent()
 	eventV2.InitializeState(runCtx)
@@ -65,7 +65,7 @@ func NewForConfig(ctx context.Context, runCtx *runcontext.RunContext) (*Skaffold
 
 	// Always add skaffold-specific labels, except during `skaffold render`
 	labeller := label.NewLabeller(runCtx.AddSkaffoldLabels(), runCtx.CustomLabels(), runCtx.GetRunID())
-	tester, err := getTester(ctx, runCtx, isLocalImage)
+	tester, err := getTester(ctx, runCtx, isLocalImage, events)
 	if err != nil {
 		endTrace(instrumentation.TraceEndError(err))
 		return nil, fmt.Errorf("creating tester: %w", err)
@@ -215,8 +215,8 @@ func isImageLocal(runCtx *runcontext.RunContext, imageName string) (bool, error)
 	return !pushImages, nil
 }
 
-func getTester(ctx context.Context, cfg test.Config, isLocalImage func(imageName string) (bool, error)) (test.Tester, error) {
-	tester, err := test.NewTester(ctx, cfg, isLocalImage)
+func getTester(ctx context.Context, cfg test.Config, isLocalImage func(imageName string) (bool, error), events filemon.Events) (test.Tester, error) {
+	tester, err := test.NewTester(ctx, cfg, isLocalImage, events)
 	if err != nil {
 		return nil, err
 	}

@@ -26,6 +26,7 @@ import (
 
 	"github.com/GoogleContainerTools/skaffold/cmd/skaffold/app/flags"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/graph"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/kubernetes/debugging"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/kubernetes/manifest"
@@ -85,7 +86,7 @@ func runFilter(ctx context.Context, out io.Writer, debuggingFilters bool, buildA
 		}
 		out.Write([]byte(manifestList.String()))
 		return nil
-	})
+	}, filemon.Events{})
 }
 
 func getInsecureRegistries(opts config.SkaffoldOptions, configs []util.VersionedConfig) (map[string]bool, error) {

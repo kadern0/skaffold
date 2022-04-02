@@ -25,6 +25,7 @@ import (
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/config"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/docker"
 	eventV2 "github.com/GoogleContainerTools/skaffold/pkg/skaffold/event/v2"
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/graph"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/logfile"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/output"
@@ -43,8 +44,8 @@ type Config interface {
 // NewTester parses the provided test cases from the Skaffold config,
 // and returns a Tester instance with all the necessary test runners
 // to run all specified tests.
-func NewTester(ctx context.Context, cfg Config, imagesAreLocal func(imageName string) (bool, error)) (Tester, error) {
-	testers, err := getImageTesters(ctx, cfg, imagesAreLocal, cfg.TestCases())
+func NewTester(ctx context.Context, cfg Config, imagesAreLocal func(imageName string) (bool, error), events filemon.Events) (Tester, error) {
+	testers, err := getImageTesters(ctx, cfg, imagesAreLocal, cfg.TestCases(), events)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +71,7 @@ func (t FullTester) TestDependencies(ctx context.Context, artifact *latestV1.Art
 
 // Test is the top level testing execution call. It serves as the
 // entrypoint to all individual tests.
-func (t FullTester) Test(ctx context.Context, out io.Writer, bRes []graph.Artifact) error {
+func (t FullTester) Test(ctx context.Context, out io.Writer, bRes []graph.Artifact, events filemon.Events) error {
 	if len(t.Testers) == 0 {
 		return nil
 	}
@@ -89,7 +90,7 @@ func (t FullTester) Test(ctx context.Context, out io.Writer, bRes []graph.Artifa
 		w := io.MultiWriter(file, &buf)
 
 		// Run the tests.
-		err = t.runTests(ctx, w, bRes)
+		err = t.runTests(ctx, w, bRes, events)
 
 		// After the test finish, close the log file. If the tests failed, print the full log to the console.
 		file.Close()
@@ -100,19 +101,19 @@ func (t FullTester) Test(ctx context.Context, out io.Writer, bRes []graph.Artifa
 		return err
 	}
 
-	if err := t.runTests(ctx, out, bRes); err != nil {
+	if err := t.runTests(ctx, out, bRes, events); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (t FullTester) runTests(ctx context.Context, out io.Writer, bRes []graph.Artifact) error {
+func (t FullTester) runTests(ctx context.Context, out io.Writer, bRes []graph.Artifact, events filemon.Events) error {
 	testerID := 0
 	for _, b := range bRes {
 		for _, tester := range t.Testers[b.ImageName] {
 			eventV2.TesterInProgress(testerID)
-			if err := tester.Test(ctx, out, b.Tag); err != nil {
+			if err := tester.Test(ctx, out, b.Tag, events); err != nil {
 				eventV2.TesterFailed(testerID, err)
 				return fmt.Errorf("running tests: %w", err)
 			}
@@ -123,7 +124,7 @@ func (t FullTester) runTests(ctx context.Context, out io.Writer, bRes []graph.Ar
 	return nil
 }
 
-func getImageTesters(ctx context.Context, cfg docker.Config, imagesAreLocal func(imageName string) (bool, error), tcs []*latestV1.TestCase) (ImageTesters, error) {
+func getImageTesters(ctx context.Context, cfg docker.Config, imagesAreLocal func(imageName string) (bool, error), tcs []*latestV1.TestCase, events filemon.Events) (ImageTesters, error) {
 	runners := make(map[string][]ImageTester)
 	for _, tc := range tcs {
 		isLocal, err := imagesAreLocal(tc.ImageName)
@@ -132,7 +133,7 @@ func getImageTesters(ctx context.Context, cfg docker.Config, imagesAreLocal func
 		}
 
 		if len(tc.StructureTests) != 0 {
-			structureRunner, err := structure.New(ctx, cfg, tc, isLocal)
+			structureRunner, err := structure.New(ctx, cfg, tc, isLocal, events)
 			if err != nil {
 				return nil, err
 			}
@@ -140,7 +141,7 @@ func getImageTesters(ctx context.Context, cfg docker.Config, imagesAreLocal func
 		}
 
 		for _, customTest := range tc.CustomTests {
-			customRunner, err := custom.New(cfg, tc.ImageName, tc.Workspace, customTest)
+			customRunner, err := custom.New(cfg, tc.ImageName, tc.Workspace, customTest, events)
 			if err != nil {
 				return nil, err
 			}

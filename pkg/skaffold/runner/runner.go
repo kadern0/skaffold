@@ -21,6 +21,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/graph"
 	latestV1 "github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/latest/v1"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/util"
@@ -49,5 +50,5 @@ type Runner interface {
 	HasDeployed() bool
 	Prune(context.Context, io.Writer) error
 	Render(context.Context, io.Writer, []graph.Artifact, bool, string) error
-	Test(context.Context, io.Writer, []graph.Artifact) error
+	Test(context.Context, io.Writer, []graph.Artifact, filemon.Events) error
 }

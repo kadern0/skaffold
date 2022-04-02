@@ -25,6 +25,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/kubernetes"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/runner"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/util"
@@ -55,7 +56,7 @@ func doApply(ctx context.Context, out io.Writer, args []string) error {
 	}
 	return withRunner(ctx, out, func(r runner.Runner, configs []util.VersionedConfig) error {
 		return r.Apply(ctx, out)
-	})
+	}, filemon.Events{})
 }
 
 func validateManifests(manifests []string) error {

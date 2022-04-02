@@ -17,6 +17,7 @@ limitations under the License.
 package runner
 
 import (
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	latestV1 "github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/latest/v1"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/sync"
 )
@@ -29,6 +30,7 @@ type ChangeSet struct {
 	needsRetest    map[string]bool // keyed on artifact image name
 	needsRedeploy  bool
 	needsReload    bool
+	events         filemon.Events
 }
 
 // NeedsRebuild gets the value of needsRebuild, which itself is not expected to be changed outside ChangeSet
@@ -67,11 +69,12 @@ func (c *ChangeSet) AddRebuild(a *latestV1.Artifact) {
 	c.needsRebuild = append(c.needsRebuild, a)
 }
 
-func (c *ChangeSet) AddRetest(a *latestV1.Artifact) {
+func (c *ChangeSet) AddRetest(a *latestV1.Artifact, events filemon.Events) {
 	if c.needsRetest == nil {
 		c.needsRetest = make(map[string]bool)
 	}
 	c.needsRetest[a.ImageName] = true
+	c.events = events
 }
 
 func (c *ChangeSet) AddResync(s *sync.Item) {
@@ -111,4 +114,8 @@ func (c *ChangeSet) Reload() {
 
 func (c *ChangeSet) ResetTest() {
 	c.needsRetest = make(map[string]bool)
+}
+
+func (c *ChangeSet) GetEvents() filemon.Events {
+	return c.events
 }

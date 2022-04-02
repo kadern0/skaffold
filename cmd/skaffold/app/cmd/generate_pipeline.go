@@ -23,6 +23,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/output"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/runner"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/util"
@@ -50,5 +51,5 @@ func doGeneratePipeline(ctx context.Context, out io.Writer) error {
 		}
 		output.Default.Fprintln(out, "Pipeline config written to pipeline.yaml!")
 		return nil
-	})
+	}, filemon.Events{})
 }

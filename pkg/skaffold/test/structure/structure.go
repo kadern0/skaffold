@@ -25,6 +25,7 @@ import (
 
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/docker"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/event"
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/output/log"
 	latestV1 "github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/latest/v1"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/util"
@@ -37,10 +38,11 @@ type Runner struct {
 	imageIsLocal      bool
 	workspace         string
 	localDaemon       docker.LocalDaemon
+	events            filemon.Events
 }
 
 // New creates a new structure.Runner.
-func New(ctx context.Context, cfg docker.Config, tc *latestV1.TestCase, imageIsLocal bool) (*Runner, error) {
+func New(ctx context.Context, cfg docker.Config, tc *latestV1.TestCase, imageIsLocal bool, events filemon.Events) (*Runner, error) {
 	localDaemon, err := docker.NewAPIClient(ctx, cfg)
 	if err != nil {
 		return nil, err
@@ -52,13 +54,14 @@ func New(ctx context.Context, cfg docker.Config, tc *latestV1.TestCase, imageIsL
 		workspace:         tc.Workspace,
 		localDaemon:       localDaemon,
 		imageIsLocal:      imageIsLocal,
+		events:            events,
 	}, nil
 }
 
 // Test is the entrypoint for running structure tests
-func (cst *Runner) Test(ctx context.Context, out io.Writer, imageTag string) error {
+func (cst *Runner) Test(ctx context.Context, out io.Writer, imageTag string, events filemon.Events) error {
 	event.TestInProgress()
-	if err := cst.runStructureTests(ctx, out, imageTag); err != nil {
+	if err := cst.runStructureTests(ctx, out, imageTag, events); err != nil {
 		event.TestFailed(cst.imageName, err)
 		return containerStructureTestErr(err)
 	}
@@ -66,7 +69,7 @@ func (cst *Runner) Test(ctx context.Context, out io.Writer, imageTag string) err
 	return nil
 }
 
-func (cst *Runner) runStructureTests(ctx context.Context, out io.Writer, imageTag string) error {
+func (cst *Runner) runStructureTests(ctx context.Context, out io.Writer, imageTag string, events filemon.Events) error {
 	if !cst.imageIsLocal {
 		// The image is remote so we have to pull it locally.
 		// `container-structure-test` currently can't do it:

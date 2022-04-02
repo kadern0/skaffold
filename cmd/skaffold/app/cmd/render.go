@@ -24,6 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/graph"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/runner"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/util"
@@ -78,5 +79,5 @@ func doRender(ctx context.Context, out io.Writer) error {
 			return fmt.Errorf("rendering manifests: %w", err)
 		}
 		return nil
-	})
+	}, filemon.Events{})
 }

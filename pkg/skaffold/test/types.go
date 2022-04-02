@@ -20,6 +20,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/filemon"
 	"github.com/GoogleContainerTools/skaffold/pkg/skaffold/graph"
 	latestV1 "github.com/GoogleContainerTools/skaffold/pkg/skaffold/schema/latest/v1"
 )
@@ -29,7 +30,7 @@ import (
 // each of which contains one or more Tester which implements
 // a single test run.
 type Tester interface {
-	Test(context.Context, io.Writer, []graph.Artifact) error
+	Test(context.Context, io.Writer, []graph.Artifact, filemon.Events) error
 	TestDependencies(ctx context.Context, artifact *latestV1.Artifact) ([]string, error)
 }
 
@@ -54,7 +55,7 @@ type FullTester struct {
 // running a single test on a single artifact image and returning its result.
 // Any new test type should implement this interface.
 type ImageTester interface {
-	Test(ctx context.Context, out io.Writer, tag string) error
+	Test(ctx context.Context, out io.Writer, tag string, events filemon.Events) error
 
 	TestDependencies(ctx context.Context) ([]string, error)
 }
